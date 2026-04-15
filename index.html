@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LISTENING — REPORT TEXT</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #020204;
+  --abyss: #07070e;
+  --deep: #0d0d18;
+  --surface: #131320;
+  --panel: #0f0f1c;
+  --bone: #d4c9a8;
+  --parchment: #b8aa88;
+  --rust: #8b3a1a;
+  --rust-glow: #c4521f;
+  --crimson: #6e1515;
+  --blood: #9b1c1c;
+  --blood-bright: #c0392b;
+  --gold: #a07830;
+  --gold-bright: #c9a84c;
+  --fog: rgba(180,160,100,0.06);
+  --border-rune: rgba(160,120,48,0.3);
+  --text-dim: #7a7060;
+  --text-mid: #9a9080;
+  --smoke: rgba(10,8,20,0.92);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--void);
+  color: var(--bone);
+  font-family: 'IM Fell English', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ── CUSTOM CURSOR ── */
+body { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='3' fill='%23c9a84c' opacity='0.8'/%3E%3Ccircle cx='10' cy='10' r='6' fill='none' stroke='%23c9a84c' stroke-width='0.8' opacity='0.4'/%3E%3C/svg%3E") 10 10, crosshair; }
+
+/* ── ATMOSPHERE ── */
+.atmo-wrap {
+  position: fixed; inset:0; z-index:0; pointer-events:none;
+  overflow:hidden;
+}
+
+/* Vignette */
+.atmo-wrap::after {
+  content:'';
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 30%, rgba(2,2,4,0.85) 100%);
+}
+
+/* Fog layers */
+.fog-layer {
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse 60% 30% at 30% 70%, rgba(60,30,10,0.12) 0%, transparent 70%),
+              radial-gradient(ellipse 50% 25% at 70% 30%, rgba(80,20,20,0.08) 0%, transparent 60%);
+  animation: fogDrift 20s ease-in-out infinite alternate;
+}
+
+@keyframes fogDrift {
+  0%   { transform: translate(0,0) scale(1); opacity:0.7; }
+  100% { transform: translate(30px, -20px) scale(1.05); opacity:1; }
+}
+
+/* Particles / spores */
+.spore {
+  position:absolute;
+  width:2px; height:2px;
+  border-radius:50%;
+  background: var(--gold);
+  opacity:0;
+  animation: sporeFloat linear infinite;
+}
+@keyframes sporeFloat {
+  0%   { transform: translateY(100vh) translateX(0); opacity:0; }
+  10%  { opacity:0.4; }
+  90%  { opacity:0.2; }
+  100% { transform: translateY(-20px) translateX(40px); opacity:0; }
+}
+
+/* Scanlines - very subtle */
+.scanlines {
+  position:fixed; inset:0; z-index:1; pointer-events:none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px);
+}
+
+/* ── WATERMARK ── */
+.watermark {
+  position:fixed; bottom:18px; right:22px; z-index:999;
+  font-family:'Cinzel', serif;
+  font-size:11px;
+  letter-spacing:0.25em;
+  color: rgba(160,120,48,0.35);
+  text-transform: uppercase;
+  pointer-events:none;
+  writing-mode: horizontal-tb;
+}
+
+/* ── MAIN WRAPPER ── */
+#app {
+  position:relative; z-index:2;
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+}
+
+/* ── SCREENS ── */
+.screen { display:none; width:100%; flex-direction:column; align-items:center; }
+.screen.active { display:flex; }
+
+/* ═══════════════════════════════
+   SCREEN 0 — JUMBOTRON / LANDING
+═══════════════════════════════ */
+#screen-landing {
+  min-height: 100vh;
+  justify-content: center;
+  position: relative;
+}
+
+.jumbotron {
+  width:100%; max-height:100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.jumbotron-img {
+  width:100%; height:100vh;
+  object-fit:cover; object-position: center;
+  filter: brightness(0.45) saturate(0.5) sepia(0.4);
+  display:block;
+}
+
+.jumbotron-overlay {
+  position:absolute; inset:0;
+  background:
+    linear-gradient(to bottom, rgba(2,2,4,0.3) 0%, transparent 25%, transparent 55%, rgba(2,2,4,0.97) 100%),
+    linear-gradient(to right, rgba(2,2,4,0.4) 0%, transparent 40%, transparent 60%, rgba(2,2,4,0.4) 100%);
+}
+
+.jumbotron-content {
+  position:absolute; bottom:0; left:0; right:0;
+  display:flex; flex-direction:column; align-items:center;
+  padding: 40px 20px 60px;
+  text-align:center;
+}
+
+.plague-sigil {
+  font-size:28px;
+  color: var(--gold);
+  margin-bottom: 14px;
+  opacity:0.7;
+  animation: sigilPulse 3s ease-in-out infinite;
+  letter-spacing:0.4em;
+}
+@keyframes sigilPulse {
+  0%,100% { opacity:0.5; transform:scale(1); }
+  50%     { opacity:0.9; transform:scale(1.04); }
+}
+
+.land-title {
+  font-family:'Cinzel', serif;
+  font-size: clamp(28px, 7vw, 72px);
+  font-weight:900;
+  letter-spacing:0.12em;
+  color: var(--bone);
+  text-shadow: 0 0 40px rgba(160,100,20,0.5), 0 2px 6px rgba(0,0,0,0.9);
+  line-height:1.1;
+  text-transform:uppercase;
+  margin-bottom:8px;
+  animation: titleReveal 1.2s ease both;
+}
+
+@keyframes titleReveal {
+  from { opacity:0; transform:translateY(20px); letter-spacing:0.3em; }
+  to   { opacity:1; transform:translateY(0);    letter-spacing:0.12em; }
+}
+
+.land-subtitle {
+  font-family:'Cinzel', serif;
+  font-size: clamp(12px, 2.5vw, 18px);
+  letter-spacing:0.4em;
+  color: var(--gold-bright);
+  text-transform:uppercase;
+  margin-bottom:6px;
+  opacity:0.85;
+  animation: titleReveal 1.5s 0.3s ease both;
+}
+
+.land-tagline {
+  font-family:'IM Fell English', serif;
+  font-style:italic;
+  font-size: clamp(13px, 2vw, 17px);
+  color: var(--parchment);
+  opacity:0.65;
+  margin-bottom:36px;
+  animation: titleReveal 1.5s 0.6s ease both;
+}
+
+.rune-divider {
+  display:flex; align-items:center; gap:16px;
+  margin-bottom:32px;
+  opacity:0.6;
+}
+.rune-divider::before, .rune-divider::after {
+  content:'';
+  height:1px; width:80px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+.rune-divider::after { background: linear-gradient(90deg, var(--gold), transparent); }
+.rune-divider span { font-size:18px; color:var(--gold); }
+
+/* ── BUTTONS ── */
+.btn-plague {
+  font-family:'Cinzel', serif;
+  font-size: clamp(13px, 2vw, 16px);
+  letter-spacing:0.3em;
+  text-transform:uppercase;
+  padding:16px 48px;
+  border:1px solid var(--gold);
+  background: linear-gradient(135deg, rgba(120,70,10,0.3), rgba(60,20,5,0.5));
+  color: var(--gold-bright);
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  transition: all 0.3s;
+  box-shadow: 0 0 20px rgba(120,80,10,0.25), inset 0 1px 0 rgba(200,160,50,0.1);
+}
+
+.btn-plague::before {
+  content:'';
+  position:absolute; inset:0;
+  background: linear-gradient(135deg, rgba(160,100,20,0.15), transparent);
+  transform:scaleX(0); transform-origin:left;
+  transition: transform 0.3s;
+}
+.btn-plague:hover::before { transform:scaleX(1); }
+.btn-plague:hover {
+  border-color: var(--gold-bright);
+  color: var(--bone);
+  box-shadow: 0 0 35px rgba(160,100,20,0.5), inset 0 1px 0 rgba(200,160,50,0.2);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  font-family:'Cinzel', serif;
+  font-size:13px;
+  letter-spacing:0.25em;
+  text-transform:uppercase;
+  padding:11px 28px;
+  border:1px solid rgba(160,120,48,0.3);
+  background: transparent;
+  color: var(--text-mid);
+  cursor:pointer;
+  transition:all 0.25s;
+}
+.btn-ghost:hover {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+/* ═══════════════════════════════
+   SCREEN 1 — NAME SELECTION
+═══════════════════════════════ */
+#screen-name {
+  padding: 60px 20px 80px;
+  max-width: 780px;
+  margin: 0 auto;
+  width:100%;
+}
+
+.page-header {
+  text-align:center;
+  margin-bottom:40px;
+}
+
+.page-header .eyebrow {
+  font-family:'Courier Prime', monospace;
+  font-size:11px;
+  letter-spacing:0.4em;
+  color: var(--gold);
+  text-transform:uppercase;
+  margin-bottom:10px;
+  opacity:0.7;
+}
+
+.page-header h2 {
+  font-family:'Cinzel', serif;
+  font-size: clamp(22px, 5vw, 40px);
+  font-weight:700;
+  letter-spacing:0.1em;
+  color: var(--bone);
+  text-shadow: 0 0 30px rgba(120,80,10,0.4);
+}
+
+.tome {
+  background: var(--panel);
+  border:1px solid var(--border-rune);
+  position:relative;
+  padding:28px;
+  box-shadow: 0 4px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(160,120,48,0.08);
+}
+
+.tome::before {
+  content:'';
+  position:absolute; inset:6px;
+  border:1px solid rgba(160,120,48,0.1);
+  pointer-events:none;
+}
+
+.tome-corner {
+  position:absolute;
+  width:16px; height:16px;
+  border-color: var(--gold);
+  border-style:solid;
+  opacity:0.5;
+}
+.tome-corner.tl { top:-1px;left:-1px; border-width:2px 0 0 2px; }
+.tome-corner.tr { top:-1px;right:-1px; border-width:2px 2px 0 0; }
+.tome-corner.bl { bottom:-1px;left:-1px; border-width:0 0 2px 2px; }
+.tome-corner.br { bottom:-1px;right:-1px; border-width:0 2px 2px 0; }
+
+.class-tabs {
+  display:flex; margin-bottom:20px; border-bottom:1px solid var(--border-rune);
+}
+.class-tab {
+  font-family:'Cinzel', serif;
+  font-size:13px;
+  letter-spacing:0.2em;
+  padding:10px 28px;
+  cursor:pointer;
+  border:none;
+  background:transparent;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  border-bottom:2px solid transparent;
+  margin-bottom:-1px;
+  transition:all 0.2s;
+}
+.class-tab.active {
+  color: var(--gold-bright);
+  border-bottom-color: var(--gold);
+}
+.class-tab:hover:not(.active) { color: var(--parchment); }
+
+.name-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap:6px;
+  max-height:260px;
+  overflow-y:auto;
+  padding-right:4px;
+}
+.name-grid::-webkit-scrollbar { width:3px; }
+.name-grid::-webkit-scrollbar-track { background:var(--abyss); }
+.name-grid::-webkit-scrollbar-thumb { background: var(--gold); opacity:0.5; }
+
+.name-item {
+  font-family:'IM Fell English', serif;
+  font-size:14px;
+  padding:9px 14px;
+  cursor:pointer;
+  border:1px solid transparent;
+  color: var(--parchment);
+  transition:all 0.15s;
+  line-height:1.3;
+}
+.name-item:hover {
+  border-color: var(--border-rune);
+  color: var(--bone);
+  background: rgba(120,80,10,0.1);
+}
+.name-item.chosen {
+  border-color: var(--gold);
+  color: var(--abyss);
+  background: var(--gold);
+  box-shadow: 0 0 14px rgba(160,100,20,0.4);
+}
+
+.selected-bar {
+  margin-top:18px;
+  padding:10px 16px;
+  border:1px solid rgba(160,120,48,0.25);
+  background: rgba(120,80,10,0.08);
+  font-family:'Courier Prime', monospace;
+  font-size:13px;
+  color: var(--gold-bright);
+  letter-spacing:0.1em;
+  display:none;
+  align-items:center;
+  gap:10px;
+}
+.pulse-dot {
+  width:7px; height:7px; border-radius:50%;
+  background: var(--blood-bright);
+  box-shadow: 0 0 8px var(--blood-bright);
+  animation: pulseDot 1.5s ease-in-out infinite;
+  flex-shrink:0;
+}
+@keyframes pulseDot {
+  0%,100% { transform:scale(1); opacity:1; }
+  50%      { transform:scale(1.5); opacity:0.5; }
+}
+
+/* ═══════════════════════════════
+   SCREEN 2 — PART 1 QUESTIONS
+═══════════════════════════════ */
+#screen-part1, #screen-part2, #screen-essay {
+  padding: 0 0 80px;
+  width:100%;
+  max-width:820px;
+  margin:0 auto;
+}
+
+/* Part banner image */
+.part-banner {
+  width:100%; height:clamp(200px,35vw,340px);
+  position:relative; overflow:hidden;
+  margin-bottom:40px;
+}
+.part-banner img {
+  width:100%; height:100%;
+  object-fit:cover; object-position:center 30%;
+  filter: brightness(0.4) saturate(0.4) sepia(0.5);
+  display:block;
+}
+.part-banner-overlay {
+  position:absolute; inset:0;
+  background: linear-gradient(to bottom, rgba(2,2,4,0.2) 0%, transparent 40%, rgba(7,7,14,0.95) 100%);
+}
+.part-banner-content {
+  position:absolute; bottom:0; left:0; right:0;
+  padding:28px 32px;
+  display:flex; align-items:flex-end; justify-content:space-between;
+}
+.part-badge {
+  font-family:'Cinzel', serif;
+  font-size: clamp(22px,5vw,42px);
+  font-weight:900;
+  color: var(--bone);
+  letter-spacing:0.08em;
+  text-shadow: 0 0 30px rgba(100,50,10,0.8);
+}
+.part-badge span {
+  font-size:0.45em;
+  letter-spacing:0.3em;
+  color: var(--gold-bright);
+  display:block;
+  font-weight:400;
+}
+.part-progress-label {
+  font-family:'Courier Prime', monospace;
+  font-size:12px;
+  color: var(--gold);
+  letter-spacing:0.2em;
+  opacity:0.8;
+}
+
+/* ── QUESTION SECTION ── */
+.q-section {
+  padding: 0 24px;
+}
+
+.q-progress {
+  margin-bottom:20px;
+}
+.q-progress-row {
+  display:flex; justify-content:space-between;
+  font-family:'Courier Prime', monospace;
+  font-size:11px; letter-spacing:0.2em;
+  color: var(--text-dim);
+  margin-bottom:6px;
+}
+.q-bar {
+  height:2px;
+  background: rgba(120,80,10,0.2);
+  position:relative; overflow:hidden;
+}
+.q-bar-fill {
+  height:100%;
+  background: linear-gradient(90deg, var(--rust), var(--gold));
+  transition: width 0.4s ease;
+  position:relative;
+}
+.q-bar-fill::after {
+  content:'';
+  position:absolute; right:0; top:-3px;
+  width:8px; height:8px;
+  background: var(--gold-bright);
+  border-radius:50%;
+  box-shadow: 0 0 6px var(--gold-bright);
+}
+
+.q-card {
+  background: var(--panel);
+  border:1px solid var(--border-rune);
+  padding:26px;
+  margin-bottom:16px;
+  position:relative;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  transition: border-color 0.2s;
+}
+.q-card::before {
+  content:'';
+  position:absolute; left:0; top:0; bottom:0;
+  width:3px;
+  background: linear-gradient(to bottom, var(--rust), transparent);
+  opacity:0.4;
+}
+
+.q-num {
+  font-family:'Courier Prime', monospace;
+  font-size:10px;
+  letter-spacing:0.35em;
+  color: var(--gold);
+  text-transform:uppercase;
+  margin-bottom:8px;
+  opacity:0.7;
+}
+.q-text {
+  font-family:'IM Fell English', serif;
+  font-size: clamp(15px,2.5vw,18px);
+  color: var(--bone);
+  line-height:1.5;
+  margin-bottom:20px;
+}
+
+.options {
+  display:flex; flex-direction:column; gap:8px;
+}
+
+.opt-btn {
+  display:flex; align-items:flex-start; gap:14px;
+  padding:12px 16px;
+  background: rgba(13,13,24,0.6);
+  border:1px solid rgba(100,80,30,0.2);
+  cursor:pointer;
+  text-align:left; width:100%;
+  font-family:'IM Fell English', serif;
+  font-size:15px;
+  color: var(--parchment);
+  transition:all 0.15s;
+  position:relative; overflow:hidden;
+}
+.opt-btn::before {
+  content:'';
+  position:absolute; inset:0;
+  background: rgba(120,80,10,0.0);
+  transition: background 0.15s;
+}
+.opt-btn:hover::before { background: rgba(120,80,10,0.08); }
+.opt-btn:hover {
+  border-color: rgba(160,120,48,0.4);
+  color: var(--bone);
+}
+.opt-btn.picked {
+  border-color: var(--gold);
+  background: rgba(100,60,5,0.2);
+  color: var(--gold-bright);
+  box-shadow: 0 0 12px rgba(120,80,10,0.3);
+}
+.opt-letter {
+  font-family:'Cinzel', serif;
+  font-size:13px;
+  font-weight:700;
+  color: var(--rust-glow);
+  min-width:22px;
+  padding-top:1px;
+  flex-shrink:0;
+}
+.opt-btn.picked .opt-letter { color: var(--gold-bright); }
+
+/* ── NAV DOTS & BUTTONS ── */
+.q-nav {
+  display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:12px;
+  margin-top:24px;
+}
+
+.dot-track {
+  display:flex; gap:6px; flex-wrap:wrap; max-width:320px;
+}
+.qdot {
+  width:9px; height:9px; border-radius:50%;
+  border:1px solid var(--text-dim);
+  cursor:pointer;
+  transition:all 0.2s;
+  background:transparent;
+}
+.qdot.answered { background:var(--blood); border-color:var(--blood); }
+.qdot.current  { background:var(--gold); border-color:var(--gold); box-shadow:0 0 6px var(--gold); }
+
+/* ── ESSAY ── */
+#screen-essay { padding: 40px 24px 80px; }
+
+.essay-header {
+  text-align:center;
+  margin-bottom:36px;
+}
+
+.essay-audio-label {
+  font-family:'Cinzel', serif;
+  font-size:14px;
+  letter-spacing:0.25em;
+  color: var(--gold-bright);
+  text-transform:uppercase;
+  margin-bottom:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--border-rune);
+}
+
+.essay-block {
+  margin-bottom:28px;
+}
+
+.essay-q-label {
+  font-family:'Courier Prime', monospace;
+  font-size:11px;
+  letter-spacing:0.3em;
+  color: var(--gold);
+  text-transform:uppercase;
+  margin-bottom:6px;
+  opacity:0.7;
+}
+
+.essay-q-text {
+  font-family:'IM Fell English', serif;
+  font-size:16px;
+  color: var(--bone);
+  line-height:1.5;
+  margin-bottom:10px;
+  padding-left:14px;
+  border-left:2px solid rgba(120,80,10,0.4);
+}
+
+textarea {
+  width:100%;
+  min-height:130px;
+  background: var(--panel);
+  border:1px solid rgba(100,80,30,0.3);
+  color: var(--parchment);
+  font-family:'Courier Prime', monospace;
+  font-size:14px;
+  line-height:1.7;
+  padding:14px 16px;
+  resize:vertical;
+  outline:none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px rgba(120,80,10,0.2);
+}
+textarea::placeholder { color: var(--text-dim); font-style:italic; }
+
+/* ── RESULT ── */
+#screen-result {
+  padding:60px 24px 80px;
+  width:100%; max-width:780px;
+  margin:0 auto;
+}
+
+.result-seal {
+  text-align:center;
+  margin-bottom:36px;
+}
+
+.seal-ring {
+  width:130px; height:130px;
+  border-radius:50%;
+  border:2px solid var(--gold);
+  margin:0 auto 16px;
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+  box-shadow: 0 0 30px rgba(120,80,10,0.4), inset 0 0 20px rgba(0,0,0,0.6);
+  animation: sealRotate 20s linear infinite;
+}
+@keyframes sealRotate {
+  from { box-shadow: 0 0 30px rgba(120,80,10,0.4), inset 0 0 20px rgba(0,0,0,0.6); }
+  50%  { box-shadow: 0 0 50px rgba(160,100,20,0.6), inset 0 0 20px rgba(0,0,0,0.6); }
+  to   { box-shadow: 0 0 30px rgba(120,80,10,0.4), inset 0 0 20px rgba(0,0,0,0.6); }
+}
+
+.seal-score {
+  font-family:'Cinzel', serif;
+  font-size: clamp(36px, 8vw, 60px);
+  font-weight:900;
+  color: var(--gold-bright);
+  text-shadow: 0 0 20px rgba(160,100,20,0.6);
+  line-height:1;
+}
+.seal-denom {
+  font-size:0.4em;
+  color: var(--rust-glow);
+  display:block;
+  letter-spacing:0.1em;
+}
+
+.result-verdict {
+  font-family:'Cinzel', serif;
+  font-size: clamp(16px,3vw,26px);
+  letter-spacing:0.15em;
+  color: var(--bone);
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.result-name-line {
+  font-family:'Courier Prime', monospace;
+  font-size:13px;
+  letter-spacing:0.1em;
+  color: var(--text-mid);
+}
+.result-name-line strong { color: var(--gold-bright); }
+
+.status-block {
+  font-family:'Courier Prime', monospace;
+  font-size:12px;
+  letter-spacing:0.1em;
+  text-align:center;
+  padding:12px;
+  margin-top:10px;
+  min-height:38px;
+  border:1px solid transparent;
+}
+.status-block.ok     { color:#4caf50; border-color:rgba(76,175,80,0.2); }
+.status-block.err    { color:var(--blood-bright); border-color:rgba(192,57,43,0.2); }
+.status-block.loading{
+  color:var(--gold);
+  border-color:var(--border-rune);
+  animation: blink 0.9s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* ── REVIEW ── */
+.review-tome { margin-top:30px; }
+
+.review-section-title {
+  font-family:'Cinzel', serif;
+  font-size:13px;
+  letter-spacing:0.3em;
+  color: var(--gold);
+  text-transform:uppercase;
+  margin-bottom:14px;
+  padding-bottom:6px;
+  border-bottom:1px solid var(--border-rune);
+  opacity:0.8;
+}
+
+.review-row {
+  display:flex; gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid rgba(120,80,10,0.1);
+  font-size:13px;
+  align-items:flex-start;
+}
+.r-num { font-family:'Courier Prime',monospace; color:var(--text-dim); min-width:26px; }
+.r-q   { flex:1; color:var(--text-mid); font-size:12px; line-height:1.4; }
+.r-a   { font-family:'Courier Prime',monospace; font-size:12px; }
+.r-a.ok   { color:#4caf50; }
+.r-a.bad  { color:var(--blood-bright); }
+
+/* ── SPACERS / UTILITIES ── */
+.sep { height:1px; background:linear-gradient(90deg,transparent,var(--border-rune),transparent); margin:20px 0; opacity:0.5; }
+.center-row { display:flex; justify-content:center; }
+.mt20 { margin-top:20px; }
+.mt30 { margin-top:30px; }
+
+/* ── PAGE TRANSITION ── */
+.screen { animation: screenIn 0.5s ease both; }
+@keyframes screenIn {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- Atmosphere -->
+<div class="atmo-wrap">
+  <div class="fog-layer"></div>
+</div>
+<div class="scanlines"></div>
+<div class="watermark">✦ Mr. Kris ✦</div>
+
+<!-- Spore particles injected by JS -->
+
+<div id="app">
+
+  <!-- ══════════ SCREEN 0 — LANDING ══════════ -->
+  <div id="screen-landing" class="screen active">
+    <div class="jumbotron" style="width:100%;position:relative;">
+      <img class="jumbotron-img" src="https://ik.imagekit.io/nvwn6quap/20260415_2013_Image%20Generation_simple_compose_01kp8mbc3tfgsae95mczxj20g5.png" alt="Listening Quiz">
+      <div class="jumbotron-overlay"></div>
+      <div class="jumbotron-content">
+        <div class="plague-sigil">✦ ✦ ✦ ✦ ✦</div>
+        <div class="land-subtitle">English — Kelas X</div>
+        <h1 class="land-title">Listening<br>Report Text</h1>
+        <div class="land-tagline">Guess the topic from what you hear</div>
+        <div class="rune-divider"><span>⸸</span></div>
+        <button class="btn-plague" onclick="goTo('screen-name')">Begin the Exercise</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SCREEN 1 — NAME ══════════ -->
+  <div id="screen-name" class="screen" style="padding:60px 20px 80px; max-width:780px; margin:0 auto; width:100%;">
+    <div class="page-header">
+      <div class="eyebrow">⸸ Identify Thyself ⸸</div>
+      <h2>Select Your Name</h2>
+    </div>
+
+    <div class="tome" style="width:100%;">
+      <div class="tome-corner tl"></div><div class="tome-corner tr"></div>
+      <div class="tome-corner bl"></div><div class="tome-corner br"></div>
+
+      <div class="class-tabs">
+        <button class="class-tab active" onclick="switchClass('X A')">Class X A</button>
+        <button class="class-tab" onclick="switchClass('X B')">Class X B</button>
+      </div>
+
+      <div class="name-grid" id="name-grid"></div>
+
+      <div class="selected-bar" id="sel-bar">
+        <div class="pulse-dot"></div>
+        <span id="sel-text">—</span>
+      </div>
+    </div>
+
+    <div class="center-row mt30">
+      <button class="btn-plague" onclick="beginQuiz()">Proceed to Part I →</button>
+    </div>
+  </div>
+
+  <!-- ══════════ SCREEN 2 — PART 1 ══════════ -->
+  <div id="screen-part1" class="screen">
+    <div class="part-banner">
+      <img src="https://ik.imagekit.io/nvwn6quap/20260415_2014_Focused%20Student%20Listening_simple_compose_01kp8me7kafgtarj7dxcycx65t.png" alt="Part 1">
+      <div class="part-banner-overlay"></div>
+      <div class="part-banner-content">
+        <div class="part-badge"><span>Audio One</span>Listening Part I</div>
+        <div class="part-progress-label" id="p1-progress-label">— / 15</div>
+      </div>
+    </div>
+
+    <div class="q-section" style="max-width:820px; margin:0 auto; width:100%;">
+      <div class="q-progress">
+        <div class="q-progress-row">
+          <span id="p1-q-label">Question 1 of 15</span>
+          <span id="p1-q-pct">0%</span>
+        </div>
+        <div class="q-bar"><div class="q-bar-fill" id="p1-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="q-card" id="p1-card">
+        <div class="tome-corner tl"></div><div class="tome-corner tr"></div>
+        <div class="tome-corner bl"></div><div class="tome-corner br"></div>
+        <div class="q-num" id="p1-num">QUESTION 01</div>
+        <div class="q-text" id="p1-text"></div>
+        <div class="options" id="p1-opts"></div>
+      </div>
+
+      <div class="q-nav">
+        <button class="btn-ghost" onclick="p1Prev()">← Back</button>
+        <div class="dot-track" id="p1-dots"></div>
+        <button class="btn-ghost" id="p1-next-btn" onclick="p1Next()">Next →</button>
+      </div>
+
+      <div class="center-row mt30">
+        <button class="btn-plague" id="p1-finish-btn" style="display:none;" onclick="goTo('screen-part2')">Proceed to Part II →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SCREEN 3 — PART 2 ══════════ -->
+  <div id="screen-part2" class="screen">
+    <div class="part-banner">
+      <img src="https://ik.imagekit.io/nvwn6quap/20260415_2015_Image%20Generation_simple_compose_01kp8mgqgffhmsay561a5ztmxj.png" alt="Part 2">
+      <div class="part-banner-overlay"></div>
+      <div class="part-banner-content">
+        <div class="part-badge"><span>Audio Two</span>Listening Part II</div>
+        <div class="part-progress-label" id="p2-progress-label">— / 15</div>
+      </div>
+    </div>
+
+    <div class="q-section" style="max-width:820px; margin:0 auto; width:100%;">
+      <div class="q-progress">
+        <div class="q-progress-row">
+          <span id="p2-q-label">Question 1 of 15</span>
+          <span id="p2-q-pct">0%</span>
+        </div>
+        <div class="q-bar"><div class="q-bar-fill" id="p2-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="q-card" id="p2-card">
+        <div class="tome-corner tl"></div><div class="tome-corner tr"></div>
+        <div class="tome-corner bl"></div><div class="tome-corner br"></div>
+        <div class="q-num" id="p2-num">QUESTION 01</div>
+        <div class="q-text" id="p2-text"></div>
+        <div class="options" id="p2-opts"></div>
+      </div>
+
+      <div class="q-nav">
+        <button class="btn-ghost" onclick="p2Prev()">← Back</button>
+        <div class="dot-track" id="p2-dots"></div>
+        <button class="btn-ghost" id="p2-next-btn" onclick="p2Next()">Next →</button>
+      </div>
+
+      <div class="center-row mt30">
+        <button class="btn-plague" id="p2-finish-btn" style="display:none;" onclick="goTo('screen-essay')">Proceed to Essay →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SCREEN 4 — ESSAY ══════════ -->
+  <div id="screen-essay" class="screen" style="padding:50px 24px 80px; max-width:780px; margin:0 auto; width:100%;">
+    <div class="essay-header">
+      <div class="eyebrow" style="font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:0.4em;color:var(--gold);text-transform:uppercase;margin-bottom:10px;opacity:0.7;">⸸ Written Response ⸸</div>
+      <h2 style="font-family:'Cinzel',serif;font-size:clamp(20px,4vw,32px);letter-spacing:0.1em;color:var(--bone);text-shadow:0 0 20px rgba(120,80,10,0.4);">Essay Questions</h2>
+    </div>
+
+    <!-- Audio 1 Essays -->
+    <div class="tome" style="width:100%; margin-bottom:24px;">
+      <div class="tome-corner tl"></div><div class="tome-corner tr"></div>
+      <div class="tome-corner bl"></div><div class="tome-corner br"></div>
+      <div class="essay-audio-label">✦ Audio One — Questions</div>
+
+      <div class="essay-block">
+        <div class="essay-q-label">Essay No. 1</div>
+        <div class="essay-q-text">Explain how this device helps people in their daily life. Give at least two examples based on the text.</div>
+        <textarea id="es1" placeholder="Write your answer here..."></textarea>
+      </div>
+      <div class="sep"></div>
+      <div class="essay-block">
+        <div class="essay-q-label">Essay No. 2</div>
+        <div class="essay-q-text">Do you think this device is important for modern life? Explain your opinion using reasons from the text and your own idea.</div>
+        <textarea id="es2" placeholder="Write your answer here..."></textarea>
+      </div>
+    </div>
+
+    <!-- Audio 2 Essays -->
+    <div class="tome" style="width:100%; margin-bottom:30px;">
+      <div class="tome-corner tl"></div><div class="tome-corner tr"></div>
+      <div class="tome-corner bl"></div><div class="tome-corner br"></div>
+      <div class="essay-audio-label">✦ Audio Two — Questions</div>
+
+      <div class="essay-block">
+        <div class="essay-q-label">Essay No. 3</div>
+        <div class="essay-q-text">Describe how this drink is made and why many people like it. Use information from the text.</div>
+        <textarea id="es3" placeholder="Write your answer here..."></textarea>
+      </div>
+      <div class="sep"></div>
+      <div class="essay-block">
+        <div class="essay-q-label">Essay No. 4</div>
+        <div class="essay-q-text">Why do you think this drink is popular around the world? Give your opinion with at least two reasons.</div>
+        <textarea id="es4" placeholder="Write your answer here..."></textarea>
+      </div>
+    </div>
+
+    <div class="center-row">
+      <button class="btn-plague" onclick="confirmSubmit()" style="font-size:15px;">Submit All Answers ⸸</button>
+    </div>
+  </div>
+
+  <!-- ══════════ SCREEN 5 — RESULT ══════════ -->
+  <div id="screen-result" class="screen" style="padding:60px 24px 80px; max-width:780px; margin:0 auto; width:100%;">
+    <div class="result-seal">
+      <div class="seal-ring">
+        <div class="seal-score"><span class="seal-denom" style="font-size:0.35em;letter-spacing:0.3em;color:var(--gold-bright);display:block;margin-bottom:2px;">SCORE</span><span id="res-score">—</span><span class="seal-denom">/100</span></div>
+      </div>
+      <div class="result-verdict" id="res-verdict">—</div>
+      <div class="result-name-line">Student: <strong id="res-name"></strong> &nbsp;·&nbsp; Class: <strong id="res-class"></strong></div>
+      <div class="status-block" id="submit-status"></div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="review-tome" id="review-tome"></div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+// ═══════════════ STUDENTS ═══════════════
+const STUDENTS = {
+  "X A": ["Adelce Anastasya Mairapea","Agrylia Wyanet Juventya Awie","Angela Octavia Maryant Gultom","Bergita Watereyau","Christine Hu","City Paradila Magai","Ditha Claudia Letsoin","Dominika Viarenatta Renaning Sukma","Eliora Judith Naomi","Ermelinda Bintang Prasanti","Gabriella Patricia Kasihiuw","Grasella E.K Uropmabin","Jesika Olivia Maryen","Keysha Kinantya Sava","Kresensia Bernarda Takati","Lea Wetapo","Liana Jovita Juwanto","Margaretha Amelia","Megawati Mayor","Merielven Thentia Tissandana","Meyta Clarensia","Nadia","Natasha Wijaya","Natasya Listyoprabowo","Noberrta Diwitau","Tamara Marice Aytem","Thisna Veronika","Vanes Andara","Veronica Yozinnia Absalon","Alifah Deliana Mecibaru","Yessika Lani Febriana"],
+  "X B": ["Amartya Bhumikensaras Setiono","Aprillia Stephani Alom","Aurelia Stephania","Bernadeta Claudia Oktavia Quartzia","Chelsea Ruditha","Claudya Priscilla Natasha","Domina Nambagani","Elisabet Jamang","Ester Selvi Yosef","Gloria Clara Anastasya","Hara Nadhira","Herlina Noventhy Ciwe","Jessica Christabella Nelwan","Jezania Lakeizha Aurelia","Lilian Mimi Arisoi","Marcellina Anindita Rahning Pramesti","Maria Jessica Lovy Maurent","Mersil Jusmina Mansoben","Noperince Janampa","Novelin Yulingka Krey","Priska Katagame","Rachel Cory Victoria Letsoin","Sara Fillaria Siwalette","Sharon Evangelista Dodu","Vichieta Dyara","Vincentia Belva Ayuadytia Sinandang","Wihelmina Elmabertine Pambudi","Wilma Arina Degrue Wairon","Yessiska Lina Febriana","Yulia Esti Kanonggopme","Yustina Amanda Vanya Yape"]
+};
+
+// ═══════════════ QUESTIONS ═══════════════
+const P1_QUESTIONS = [
+  { q:"What is the main idea of the text?", opts:["A modern device worn on the wrist","A traditional object used for time","A large machine used at home","A tool used for cooking food","A simple device for communication"], ans:0 },
+  { q:"Where is this object usually worn?", opts:["Around the neck as an accessory","On the wrist like a watch","On the head like a headset","In the pocket like a phone","On the arm like a band"], ans:1 },
+  { q:"What is the main purpose of this device?", opts:["To cook and prepare daily meals","To help manage activities and health","To store files and documents safely","To play games for entertainment","To replace a computer completely"], ans:1 },
+  { q:"Why can this device perform many functions?", opts:["Because it has a very large screen","Because it uses advanced batteries","Because it connects to a smartphone","Because it works without power","Because it is made of metal"], ans:2 },
+  { q:"What activities can this device track?", opts:["Travel routes and ticket bookings","Steps taken and body conditions","Cooking time and food temperature","Weather changes and air quality","Money usage and bank balance"], ans:1 },
+  { q:"Why do users check this device regularly?", opts:["To monitor their health condition","To change its physical design","To clean the surface regularly","To improve its battery size","To adjust its external shape"], ans:0 },
+  { q:"What information can the device display?", opts:["Printed documents and reports","Messages and phone notifications","Books and long written texts","Movies and full video content","Maps and navigation systems"], ans:1 },
+  { q:"Why do users not need to check their phones often?", opts:["Because the phone is not working","Because the device shows notifications","Because the battery runs out quickly","Because the phone is too heavy","Because the screen is too small"], ans:1 },
+  { q:"What additional features are mentioned?", opts:["Cooking tools and cleaning systems","Farming tools and weather reports","Music control and simple applications","Driving tools and navigation maps","Drawing tools and editing features"], ans:2 },
+  { q:"Why is this device considered practical?", opts:["Because it is large and visible","Because it has limited functions","Because it combines many features","Because it is heavy and strong","Because it is rarely used"], ans:2 },
+  { q:"What is the writer's opinion about this device?", opts:["It is not useful in daily life","It is very useful and helpful","It is too expensive to use","It is difficult to operate","It is outdated and old"], ans:1 },
+  { q:"Who are the main users of this device?", opts:["People who work in farms","People who live in villages","People with active lifestyles","People who avoid technology","People who study history"], ans:2 },
+  { q:"What can be inferred about this device?", opts:["It has only one simple function","It replaces all modern devices","It combines several useful functions","It is rarely used by people","It is only for decoration"], ans:2 },
+  { q:"Why has this device become popular?", opts:["Because it has a unique color","Because it has useful features","Because it is very expensive","Because it is very large","Because it is very simple"], ans:1 },
+  { q:"What object is being described?", opts:["A handheld mobile phone device","A portable personal computer device","A wearable smart watch device","A wireless audio listening device","A digital screen tablet device"], ans:2 }
+];
+
+const P2_QUESTIONS = [
+  { q:"What is the main idea of the text?", opts:["A popular drink consumed daily","A type of food served at lunch","A tool used in the kitchen","A place where people relax","A machine used for cooking"], ans:0 },
+  { q:"How is this drink usually served?", opts:["Only in cold temperature form","Only in hot temperature form","In both hot and cold forms","In frozen and solid form","In dry powder form only"], ans:2 },
+  { q:"What is this drink made from?", opts:["Leaves that are dried and boiled","Fruits that are mixed with sugar","Beans that are roasted and ground","Milk that is heated and mixed","Rice that is cooked and blended"], ans:2 },
+  { q:"What is the color of this drink?", opts:["A light yellow color tone","A bright green color tone","A dark brown color tone","A clear transparent color","A strong blue color tone"], ans:2 },
+  { q:"Why do people add sugar or milk?", opts:["To make the drink taste sweeter","To make the drink colder","To change the drink color","To increase the drink volume","To reduce the drink smell"], ans:0 },
+  { q:"Why do people drink it in the morning?", opts:["To help them feel more awake","To help them sleep better","To make them feel relaxed","To improve their appetite","To make them feel warmer"], ans:0 },
+  { q:"Where is this drink commonly found?", opts:["Only in hospitals and clinics","Only in schools and classrooms","In cafés, homes, and workplaces","In airports and train stations","In farms and agricultural areas"], ans:2 },
+  { q:"When do people usually drink it?", opts:["When they are going to sleep","When they are relaxing or working","When they are doing exercise","When they are traveling far","When they are cooking meals"], ans:1 },
+  { q:"What effect does this drink have?", opts:["It makes people feel sleepy","It makes people feel more active","It makes people feel hungry","It makes people feel tired","It makes people feel calm"], ans:1 },
+  { q:"What is the writer's opinion about this drink?", opts:["It is not interesting to consume","It is popular and enjoyable","It is expensive and rare","It is unhealthy to drink","It is difficult to prepare"], ans:1 },
+  { q:"Why is this drink widely consumed?", opts:["Because it has many colors","Because it is simple and useful","Because it is expensive","Because it is hard to find","Because it is rarely made"], ans:1 },
+  { q:"What can be inferred about this drink?", opts:["It is not part of daily life","It is only for special events","It is part of daily routines","It is only for children","It is not widely available"], ans:2 },
+  { q:"Which activity is NOT mentioned?", opts:["Relaxing while drinking it","Working while drinking it","Talking while drinking it","Sleeping while drinking it","Enjoying it with others"], ans:3 },
+  { q:"How is the taste described?", opts:["Very sweet and light","Strong and slightly bitter","Sour and fresh tasting","Salty and warm tasting","Bland and neutral tasting"], ans:1 },
+  { q:"What object is being described?", opts:["A sweet fruit juice drink","A fresh milk beverage drink","A roasted bean coffee drink","A green tea herbal drink","A carbonated soda drink"], ans:2 }
+];
+
+const LETTERS = ['A','B','C','D','E'];
+
+// ═══════════════ GAS CONFIG ═══════════════
+const GAS_URL = "https://script.google.com/macros/s/AKfycbw8k009HxSZWZHDE67hNhp8cHghu3vIUg5_NvfFrPXLRLlT42sTKsK6r8voYWgQiNj3/exec"; // ← Replace after deploying GAS
+
+// ═══════════════ STATE ═══════════════
+let selName = "", selClass = "";
+let activeTab = "X A";
+let p1Answers = {};  // index → option index
+let p2Answers = {};
+let p1Current = 0;
+let p2Current = 0;
+// Shuffled question arrays
+let p1Qs = [], p2Qs = [];
+
+// ═══════════════ SPORES ═══════════════
+(function(){
+  for(let i=0;i<18;i++){
+    const s = document.createElement('div');
+    s.className = 'spore';
+    s.style.cssText = `left:${Math.random()*100}%;animation-duration:${12+Math.random()*20}s;animation-delay:${Math.random()*15}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;`;
+    document.querySelector('.atmo-wrap').appendChild(s);
+  }
+})();
+
+// ═══════════════ NAVIGATION ═══════════════
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = '';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ═══════════════ NAME SELECTION ═══════════════
+function switchClass(cls) {
+  activeTab = cls;
+  document.querySelectorAll('.class-tab').forEach(t => t.classList.toggle('active', t.textContent.trim() === 'Class '+cls));
+  renderNames();
+}
+
+function renderNames() {
+  const grid = document.getElementById('name-grid');
+  grid.innerHTML = '';
+  STUDENTS[activeTab].forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'name-item' + (n === selName && activeTab === selClass ? ' chosen' : '');
+    el.textContent = n;
+    el.onclick = () => pickName(n, activeTab);
+    grid.appendChild(el);
+  });
+}
+
+function pickName(n, cls) {
+  selName = n; selClass = cls;
+  document.querySelectorAll('.name-item').forEach(el => el.classList.toggle('chosen', el.textContent === n));
+  const bar = document.getElementById('sel-bar');
+  bar.style.display = 'flex';
+  document.getElementById('sel-text').textContent = n + '  —  Class ' + cls;
+}
+
+// ═══════════════ SHUFFLE ═══════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function prepQs(bank) {
+  return shuffle(bank).map(q => {
+    const correctText = q.opts[q.ans];
+    const shuffledOpts = shuffle([...q.opts]);
+    return { ...q, opts: shuffledOpts, ans: shuffledOpts.indexOf(correctText) };
+  });
+}
+
+// ═══════════════ BEGIN QUIZ ═══════════════
+function beginQuiz() {
+  if (!selName) { alert('Please select your name first.'); return; }
+  p1Qs = prepQs(P1_QUESTIONS);
+  p2Qs = prepQs(P2_QUESTIONS);
+  p1Answers = {}; p2Answers = {};
+  p1Current = 0; p2Current = 0;
+  buildDots('p1-dots', p1Qs.length, p1Answers, p1Current);
+  buildDots('p2-dots', p2Qs.length, p2Answers, p2Current);
+  goTo('screen-part1');
+  renderP1();
+}
+
+// ═══════════════ PART 1 ═══════════════
+function renderP1() {
+  const q = p1Qs[p1Current];
+  const total = p1Qs.length;
+  const pct = Math.round((p1Current/total)*100);
+  document.getElementById('p1-q-label').textContent = `Question ${p1Current+1} of ${total}`;
+  document.getElementById('p1-q-pct').textContent = pct+'%';
+  document.getElementById('p1-fill').style.width = pct+'%';
+  document.getElementById('p1-progress-label').textContent = `${p1Current+1} / ${total}`;
+  document.getElementById('p1-num').textContent = `QUESTION ${String(p1Current+1).padStart(2,'0')}`;
+  document.getElementById('p1-text').textContent = q.q;
+  renderOpts('p1-opts', q, p1Answers[p1Current], (i)=>{ p1Answers[p1Current]=i; renderP1(); if(p1Current<p1Qs.length-1) setTimeout(p1Next, 340); });
+  document.getElementById('p1-finish-btn').style.display = (p1Current===total-1) ? 'block' : 'none';
+  buildDots('p1-dots', total, p1Answers, p1Current);
+}
+function p1Next() { if(p1Current<p1Qs.length-1){p1Current++;renderP1();} }
+function p1Prev() { if(p1Current>0){p1Current--;renderP1();} }
+
+// ═══════════════ PART 2 ═══════════════
+function renderP2() {
+  const q = p2Qs[p2Current];
+  const total = p2Qs.length;
+  const pct = Math.round((p2Current/total)*100);
+  document.getElementById('p2-q-label').textContent = `Question ${p2Current+1} of ${total}`;
+  document.getElementById('p2-q-pct').textContent = pct+'%';
+  document.getElementById('p2-fill').style.width = pct+'%';
+  document.getElementById('p2-progress-label').textContent = `${p2Current+1} / ${total}`;
+  document.getElementById('p2-num').textContent = `QUESTION ${String(p2Current+1).padStart(2,'0')}`;
+  document.getElementById('p2-text').textContent = q.q;
+  renderOpts('p2-opts', q, p2Answers[p2Current], (i)=>{ p2Answers[i===undefined?p2Current:p2Current]=i; p2Answers[p2Current]=i; renderP2(); if(p2Current<p2Qs.length-1) setTimeout(p2Next,340); });
+  document.getElementById('p2-finish-btn').style.display = (p2Current===total-1) ? 'block' : 'none';
+  buildDots('p2-dots', total, p2Answers, p2Current);
+}
+function p2Next() { if(p2Current<p2Qs.length-1){p2Current++;renderP2();} }
+function p2Prev() { if(p2Current>0){p2Current--;renderP2();} }
+
+// called when screen-part2 becomes active
+const origGoTo = goTo;
+window.goTo = function(id) {
+  origGoTo(id);
+  if(id==='screen-part2') renderP2();
+};
+
+// ═══════════════ RENDER OPTIONS ═══════════════
+function renderOpts(wrapperId, q, picked, cb) {
+  const wrap = document.getElementById(wrapperId);
+  wrap.innerHTML = '';
+  q.opts.forEach((opt,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn' + (picked===i?' picked':'');
+    btn.innerHTML = `<span class="opt-letter">${LETTERS[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => cb(i);
+    wrap.appendChild(btn);
+  });
+}
+
+// ═══════════════ DOTS ═══════════════
+function buildDots(containerId, total, answers, current) {
+  const c = document.getElementById(containerId);
+  if(!c) return;
+  // Build if empty
+  if(c.children.length !== total) {
+    c.innerHTML = '';
+    for(let i=0;i<total;i++){
+      const d = document.createElement('div');
+      d.className='qdot';
+      d.title=`Q${i+1}`;
+      d.onclick=(()=>{
+        const idx=i;
+        return ()=>{
+          if(containerId==='p1-dots'){p1Current=idx;renderP1();}
+          else{p2Current=idx;renderP2();}
+        };
+      })();
+      c.appendChild(d);
+    }
+  }
+  Array.from(c.children).forEach((d,i)=>{
+    d.className='qdot'+(i===current?' current':(answers[i]!==undefined?' answered':''));
+  });
+}
+
+// ═══════════════ SUBMIT ═══════════════
+function confirmSubmit() {
+  const u1 = p1Qs.filter((_,i)=>p1Answers[i]===undefined).length;
+  const u2 = p2Qs.filter((_,i)=>p2Answers[i]===undefined).length;
+  const unanswered = u1+u2;
+  if(unanswered>0){
+    if(!confirm(`You have ${unanswered} unanswered MC question(s). Submit anyway?`)) return;
+  }
+  showResult();
+}
+
+function showResult() {
+  // Score Part 1
+  let c1=0;
+  p1Qs.forEach((q,i)=>{ if(p1Answers[i]===q.ans) c1++; });
+  let c2=0;
+  p2Qs.forEach((q,i)=>{ if(p2Answers[i]===q.ans) c2++; });
+  const totalMC = p1Qs.length + p2Qs.length;
+  const totalCorrect = c1+c2;
+  const score = Math.round((totalCorrect/totalMC)*100);
+
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-name').textContent = selName;
+  document.getElementById('res-class').textContent = selClass;
+
+  let verdict;
+  if(score>=90) verdict='Distinguished Scholar ✦';
+  else if(score>=75) verdict='Proficient Listener ◆';
+  else if(score>=60) verdict='Apprentice Scribe ●';
+  else verdict='Seek the Knowledge ⸸';
+  document.getElementById('res-verdict').textContent = verdict;
+
+  buildReview();
+  goTo('screen-result');
+  sendToGAS(score, c1, c2, totalCorrect, totalMC);
+}
+
+function buildReview() {
+  const tome = document.getElementById('review-tome');
+  tome.innerHTML = '';
+
+  function makeSection(title, qs, ans) {
+    const wrap = document.createElement('div');
+    wrap.style.marginBottom = '28px';
+    wrap.innerHTML = `<div class="review-section-title">${title}</div>`;
+    qs.forEach((q,i) => {
+      const row = document.createElement('div');
+      row.className = 'review-row';
+      const userIdx = ans[i];
+      const correct = userIdx === q.ans;
+      const userLetter = userIdx !== undefined ? LETTERS[userIdx] : '—';
+      const correctLetter = LETTERS[q.ans];
+      row.innerHTML = `
+        <span class="r-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="r-q">${q.q}</span>
+        <span class="r-a ${correct?'ok':'bad'}">${correct ? '✓ '+userLetter : '✗ '+userLetter+' ('+correctLetter+')'}</span>`;
+      wrap.appendChild(row);
+    });
+    return wrap;
+  }
+
+  tome.appendChild(makeSection('✦ Part I — Audio One', p1Qs, p1Answers));
+  tome.appendChild(makeSection('✦ Part II — Audio Two', p2Qs, p2Answers));
+
+  // Essays
+  const essayWrap = document.createElement('div');
+  essayWrap.innerHTML = `<div class="review-section-title">✦ Essay Responses</div>`;
+  [
+    {id:'es1',label:'Essay 1 (Audio 1)'},
+    {id:'es2',label:'Essay 2 (Audio 1)'},
+    {id:'es3',label:'Essay 3 (Audio 2)'},
+    {id:'es4',label:'Essay 4 (Audio 2)'}
+  ].forEach(e => {
+    const val = (document.getElementById(e.id)||{}).value || '';
+    const row = document.createElement('div');
+    row.className='review-row';
+    row.innerHTML = `<span class="r-num">ES</span><span class="r-q">${e.label}</span><span class="r-a ${val.trim()?'ok':'bad'}">${val.trim()?'✓ Submitted':'✗ Empty'}</span>`;
+    essayWrap.appendChild(row);
+  });
+  tome.appendChild(essayWrap);
+}
+
+// ═══════════════ GAS ═══════════════
+async function sendToGAS(score, c1, c2, totalCorrect, totalMC) {
+  const status = document.getElementById('submit-status');
+  status.className = 'status-block loading';
+  status.textContent = '▶ Transmitting data to the ledger...';
+
+  const p1Map = {}, p2Map = {};
+  p1Qs.forEach((q,i) => { p1Map['P1_Q'+(i+1)] = p1Answers[i]!==undefined ? LETTERS[p1Answers[i]]+'. '+q.opts[p1Answers[i]] : '—'; });
+  p2Qs.forEach((q,i) => { p2Map['P2_Q'+(i+1)] = p2Answers[i]!==undefined ? LETTERS[p2Answers[i]]+'. '+q.opts[p2Answers[i]] : '—'; });
+
+  const payload = {
+    timestamp:    new Date().toISOString(),
+    name:         selName,
+    class:        selClass,
+    score:        score,
+    part1_correct: c1,
+    part2_correct: c2,
+    total_correct: totalCorrect,
+    total_mc:     totalMC,
+    p1_answers:   JSON.stringify(p1Map),
+    p2_answers:   JSON.stringify(p2Map),
+    essay1:       (document.getElementById('es1')||{}).value||'',
+    essay2:       (document.getElementById('es2')||{}).value||'',
+    essay3:       (document.getElementById('es3')||{}).value||'',
+    essay4:       (document.getElementById('es4')||{}).value||''
+  };
+
+  try {
+    await fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    status.className = 'status-block ok';
+    status.textContent = '✓ Response recorded in the ledger — Praise be.';
+  } catch(err) {
+    status.className = 'status-block err';
+    status.textContent = '✗ Transmission failed: ' + err.message;
+  }
+}
+
+// ═══════════════ INIT ═══════════════
+renderNames();
+</script>
+</body>
+</html>
