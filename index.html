@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CLOSED</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@900&display=swap');
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --pink: #ff2d78;
+      --dark-pink: #a0004a;
+      --black: #0a0009;
+      --neon-pink: #ff6eb4;
+    }
+
+    body {
+      background-color: var(--black);
+      color: var(--pink);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Animated scanlines overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(255, 45, 120, 0.04) 3px,
+        rgba(255, 45, 120, 0.04) 4px
+      );
+      pointer-events: none;
+      z-index: 10;
+      animation: scanMove 8s linear infinite;
+    }
+
+    @keyframes scanMove {
+      from { background-position: 0 0; }
+      to   { background-position: 0 100vh; }
+    }
+
+    /* ── Vignette ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center,
+        transparent 40%,
+        rgba(0,0,0,0.85) 100%
+      );
+      pointer-events: none;
+      z-index: 11;
+    }
+
+    /* ── Animated grid background ── */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,45,120,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,45,120,0.08) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridPulse 4s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.5; }
+      50%       { opacity: 1; }
+    }
+
+    /* ── Floating particles ── */
+    .particles {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      background: var(--pink);
+      animation: fall linear infinite;
+      opacity: 0;
+    }
+
+    @keyframes fall {
+      0%   { transform: translateY(-10px); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 0.6; }
+      100% { transform: translateY(100vh); opacity: 0; }
+    }
+
+    /* ── Corner decorations ── */
+    .corner {
+      position: fixed;
+      width: 60px;
+      height: 60px;
+      z-index: 12;
+    }
+    .corner::before,
+    .corner::after {
+      content: '';
+      position: absolute;
+      background: var(--pink);
+      box-shadow: 0 0 8px var(--pink);
+    }
+    .corner::before { width: 100%; height: 2px; top: 0; left: 0; }
+    .corner::after  { width: 2px; height: 100%; top: 0; left: 0; }
+
+    .corner.tl { top: 16px; left: 16px; }
+    .corner.tr { top: 16px; right: 16px; transform: scaleX(-1); }
+    .corner.bl { bottom: 16px; left: 16px; transform: scaleY(-1); }
+    .corner.br { bottom: 16px; right: 16px; transform: scale(-1); }
+
+    /* ── Center card ── */
+    .card {
+      position: relative;
+      z-index: 20;
+      text-align: center;
+      padding: 48px 40px;
+      border: 1px solid var(--dark-pink);
+      background: rgba(10, 0, 9, 0.75);
+      backdrop-filter: blur(4px);
+      max-width: 90vw;
+      box-shadow:
+        0 0 20px rgba(255,45,120,0.3),
+        inset 0 0 30px rgba(255,45,120,0.05);
+      animation: cardBreath 3s ease-in-out infinite;
+    }
+
+    @keyframes cardBreath {
+      0%, 100% { box-shadow: 0 0 20px rgba(255,45,120,0.3), inset 0 0 30px rgba(255,45,120,0.05); }
+      50%       { box-shadow: 0 0 50px rgba(255,45,120,0.6), inset 0 0 50px rgba(255,45,120,0.1); }
+    }
+
+    /* corner accents on card */
+    .card::before,
+    .card::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-color: var(--neon-pink);
+      border-style: solid;
+    }
+    .card::before {
+      top: -1px; left: -1px;
+      border-width: 2px 0 0 2px;
+    }
+    .card::after {
+      bottom: -1px; right: -1px;
+      border-width: 0 2px 2px 0;
+    }
+
+    /* ── Error badge ── */
+    .badge {
+      display: inline-block;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(0.6rem, 2vw, 0.75rem);
+      letter-spacing: 0.25em;
+      color: var(--black);
+      background: var(--pink);
+      padding: 4px 14px;
+      margin-bottom: 28px;
+      text-transform: uppercase;
+      clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+      animation: badgeBlink 2.5s step-start infinite;
+    }
+
+    @keyframes badgeBlink {
+      0%, 90%, 100% { opacity: 1; }
+      92%, 96%       { opacity: 0; }
+    }
+
+    /* ── Main glitch text ── */
+    .glitch-wrap {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .glitch {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.4rem, 6vw, 3rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #fff;
+      text-shadow:
+        0 0 10px var(--pink),
+        0 0 30px var(--pink);
+      position: relative;
+      display: inline-block;
+      animation: glitchBase 5s infinite;
+    }
+
+    .glitch::before,
+    .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+
+    .glitch::before {
+      color: var(--neon-pink);
+      text-shadow: -2px 0 cyan;
+      animation: glitchTop 3s infinite linear;
+    }
+
+    .glitch::after {
+      color: cyan;
+      text-shadow: 2px 0 var(--pink);
+      animation: glitchBot 2.5s infinite linear;
+    }
+
+    @keyframes glitchBase {
+      0%, 92%, 100% { transform: none; }
+      93%  { transform: skewX(-5deg) translateX(3px); }
+      94%  { transform: skewX(4deg) translateX(-2px); }
+      95%  { transform: none; }
+      97%  { transform: translateX(4px); }
+      98%  { transform: translateX(-4px); }
+    }
+
+    @keyframes glitchTop {
+      0%,80%,100% { clip-path: polygon(0 0,100% 0,100% 0%,0 0%); transform: none; opacity: 0; }
+      81% { clip-path: polygon(0 10%,100% 10%,100% 30%,0 30%); transform: translate(-4px,0); opacity: 1; }
+      83% { clip-path: polygon(0 50%,100% 50%,100% 60%,0 60%); transform: translate(4px,0); opacity: 1; }
+      85% { clip-path: polygon(0 70%,100% 70%,100% 80%,0 80%); transform: translate(-3px,0); opacity: 1; }
+      87% { opacity: 0; }
+    }
+
+    @keyframes glitchBot {
+      0%,75%,100% { clip-path: polygon(0 0,100% 0,100% 0%,0 0%); transform: none; opacity: 0; }
+      76% { clip-path: polygon(0 60%,100% 60%,100% 75%,0 75%); transform: translate(5px,0); opacity: 1; }
+      78% { clip-path: polygon(0 20%,100% 20%,100% 35%,0 35%); transform: translate(-3px,0); opacity: 1; }
+      80% { clip-path: polygon(0 80%,100% 80%,100% 95%,0 95%); transform: translate(2px,0); opacity: 1; }
+      82% { opacity: 0; }
+    }
+
+    /* ── Subtext ── */
+    .subtext {
+      font-size: clamp(0.65rem, 2.2vw, 0.85rem);
+      letter-spacing: 0.3em;
+      color: var(--dark-pink);
+      text-transform: uppercase;
+      animation: flicker 4s infinite;
+    }
+
+    @keyframes flicker {
+      0%,97%,100% { opacity: 1; }
+      98%          { opacity: 0.1; }
+      99%          { opacity: 0.8; }
+    }
+
+    /* ── Divider ── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--pink), transparent);
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '//';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(10,0,9,0.9);
+      padding: 0 8px;
+      font-size: 0.7rem;
+      color: var(--pink);
+    }
+
+    /* ── Bottom status ── */
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: clamp(0.5rem, 1.8vw, 0.65rem);
+      color: rgba(255,45,120,0.45);
+      margin-top: 24px;
+      letter-spacing: 0.15em;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--pink);
+      margin-right: 6px;
+      box-shadow: 0 0 6px var(--pink);
+      animation: dotPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%       { transform: scale(1.6); opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="grid-bg"></div>
+
+  <!-- Particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Corner brackets -->
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <!-- Main card -->
+  <div class="card">
+    <div class="badge">&#9888; Access Denied</div>
+
+    <div class="glitch-wrap">
+      <div class="glitch" data-text="The Assignment / Task">The Assignment / Task</div>
+    </div>
+    <div class="glitch-wrap">
+      <div class="glitch" data-text="Is Closed Already.">Is Closed Already.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="subtext">Submission window terminated</div>
+
+    <div class="status-row">
+      <span><span class="dot"></span>STATUS: LOCKED</span>
+      <span>ERR_403</span>
+      <span>SYS::OFFLINE</span>
+    </div>
+  </div>
+
+  <script>
+    // Generate falling particles
+    const container = document.getElementById('particles');
+    const COUNT = 30;
+
+    for (let i = 0; i < COUNT; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+
+      const h = Math.random() * 60 + 10;   // height 10–70px
+      const dur = Math.random() * 6 + 4;   // 4–10s
+      const delay = Math.random() * 10;    // 0–10s delay
+      const left = Math.random() * 100;    // horizontal position
+
+      p.style.cssText = `
+        left: ${left}%;
+        height: ${h}px;
+        animation-duration: ${dur}s;
+        animation-delay: -${delay}s;
+        opacity: ${Math.random() * 0.5 + 0.1};
+        width: ${Math.random() > 0.7 ? '2px' : '1px'};
+      `;
+      container.appendChild(p);
+    }
+
+    // Occasional full-page glitch flash
+    setInterval(() => {
+      if (Math.random() < 0.3) {
+        document.body.style.filter = 'hue-rotate(180deg) brightness(1.4)';
+        setTimeout(() => document.body.style.filter = '', 80);
+      }
+    }, 3000);
+  </script>
+</body>
+</html>
